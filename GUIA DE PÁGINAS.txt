@@ -1,0 +1,39 @@
+GUIA DE PÁGINAS-
+PÁGINA: início
+esta página é mostrada para os motoristas já liberados pela plataforma quando seu cadastro for autorizado.
+Após aprovação, esta tela aparecerá para o motorista.
+no topo da tela tem a barra de pesquisa de endereço para facilitar a navegação.
+o ícone de placa de transito chamado evento informa eventos no trajeto como buracos, radares, alagamento, ponto de apoio policial.
+a baixo do mapa tem o botão de online para iniciar as corridas.
+a baixo tem a barra de aceitação que muda de cor de acordo com o percentual. abaixo de 40% vermelha- de 40 até 50% amarela - de 50 pra cima verde.
+próxima barra é a de cancelamento. de 0% até 5%, ver. até 10% amarelo. acima disso, vermelho.
+categoria:	
+|Starter|
+Nota: 4.70 a 4.79
+Aceitação: mínimo 50%
+Cancelamento: até 20%
+(Motorista iniciante, começando a construir histórico)
+|Pro Driver|
+Nota: 4.80 a 4.89
+Aceitação: mínimo 60%
+Cancelamento: até 15%
+(Motorista regular, já demonstra consistência e qualidade)
+|Elite|
+Nota: 4.90 a 4.94
+Aceitação: mínimo 65%
+Cancelamento: até 12%
+(Motorista de alto nível, quase no topo da plataforma)
+bônus por categoria: MODO META - DESTINO - 
+|Master 🏆|
+Nota: 4.95 a 5.00
+Aceitação: mínimo 70%
+Cancelamento: até 10%
+bônus por categoria: MODO META - DESTINO - +1,00 POR CORRIDA
+modo meta é ativado é liberado para motoristas elite e master.
+esta opção permite o motorista informar ao app quanto ele quer fazer ao dia, quanto quer ganhar por hora e por quilometragem
+ com base no |tempo x km x valor| de cada viagem.
+após o valor desejado pelo motorista ser alcançado, ele recebe um popup de meta alcançada e de se ele quer continuar online para metas futuras
+como semanal e/ou mensal;
+o mapa oferece a opção para o motorista baixar locais específicos se localizar sem internet.
+
+

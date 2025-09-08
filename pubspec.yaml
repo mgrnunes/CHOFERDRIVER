@@ -11,57 +11,75 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   
-  # Supabase
+  # Backend - Supabase
   supabase_flutter: ^2.5.6
   
-  # CLOUDINARY e HTTP
+  # Cloudinary e HTTP
   cloudinary_public: ^0.21.0
   dio: ^5.3.2
   http: ^1.1.0
   crypto: ^3.0.3
   
-  # UI básico - APENAS o essencial
+  # UI e Interface
   image_picker: ^1.0.4
   intl: ^0.18.1
   
-  # Utilities básicos
+  # State Management
+  provider: ^6.1.1
+  
+  # Persistência Local
   shared_preferences: ^2.2.2
-  
-  # NOVAS DEPENDÊNCIAS PARA FUNCIONALIDADES AVANÇADAS
-  # Google Maps
-  google_maps_flutter: ^2.5.0
-  
-  # Localização e GPS
-  geolocator: ^10.1.0
-  permission_handler: ^11.0.1
-  
-  # WebSocket e tempo real
-  web_socket_channel: ^2.4.0
-  
-  # Notificações Push
-  firebase_core: ^2.24.2
-  firebase_messaging: ^14.7.10
-  flutter_local_notifications: ^16.2.0
-  
-  # Persistência avançada
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   
-  # Geocoding (endereço <-> coordenadas)
+  # Google Maps e Localização
+  google_maps_flutter: ^2.5.0
+  geolocator: ^10.1.0
+  permission_handler: ^11.0.1
   geocoding: ^2.1.1
+  flutter_polyline_points: ^2.0.0
+  
+  # Conectividade e Rede
+  connectivity_plus: ^5.0.2
+  web_socket_channel: ^2.4.0
+  
+  # Notificações Locais (sem Firebase)
+  flutter_local_notifications: ^16.2.0
+  
+  # Audio e Feedback
+  audioplayers: ^5.2.1
+  vibration: ^1.8.4
+  
+  # Utilities
+  url_launcher: ^6.2.2
+  package_info_plus: ^4.2.0
+  path_provider: ^2.1.2
+  
+  # Localização offline e cache
+  cached_network_image: ^3.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
   
-  # Para Hive (persistência)
+  # Para Hive (geração de código)
   hive_generator: ^2.0.1
   build_runner: ^2.4.7
 
 flutter:
   uses-material-design: true
   
-  # Assets - Declaração dos recursos
+  # Assets - Recursos do aplicativo
   assets:
     - assets/images/
+    - assets/icons/
+    - assets/sounds/
+    
+  # Fontes customizadas (opcional)
+  # fonts:
+  #   - family: CustomFont
+  #     fonts:
+  #       - asset: assets/fonts/CustomFont-Regular.ttf
+  #       - asset: assets/fonts/CustomFont-Bold.ttf
+  #         weight: 700
