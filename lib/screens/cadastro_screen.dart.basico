@@ -1,0 +1,98 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class CadastroScreen extends StatefulWidget {
+  const CadastroScreen({super.key}); // <-- aqui está o const certinho
+
+  @override
+  State<CadastroScreen> createState() => _CadastroScreenState();
+}
+
+class _CadastroScreenState extends State<CadastroScreen> {
+  final _nomeController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _senhaController = TextEditingController();
+
+  bool _loading = false;
+  String? _mensagem;
+
+  final supabase = Supabase.instance.client;
+
+  Future<void> _cadastrar() async {
+    setState(() {
+      _loading = true;
+      _mensagem = null;
+    });
+
+    try {
+      final response = await supabase.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _senhaController.text.trim(),
+        data: {
+          "nome": _nomeController.text.trim(),
+        },
+      );
+
+      if (response.user != null) {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/cadastro_sucesso');
+      } else {
+        setState(() {
+          _mensagem = "Não foi possível cadastrar ❌";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _mensagem = "Erro: $e";
+      });
+    } finally {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Cadastro")),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            TextField(
+              controller: _nomeController,
+              decoration: const InputDecoration(labelText: "Nome"),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: "Email"),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _senhaController,
+              decoration: const InputDecoration(labelText: "Senha"),
+              obscureText: true,
+            ),
+            const SizedBox(height: 20),
+            _loading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _cadastrar,
+                    child: const Text("Cadastrar"),
+                  ),
+            if (_mensagem != null) ...[
+              const SizedBox(height: 20),
+              Text(
+                _mensagem!,
+                style: const TextStyle(color: Colors.redAccent),
+                textAlign: TextAlign.center,
+              ),
+            ]
+          ],
+        ),
+      ),
+    );
+  }
+}

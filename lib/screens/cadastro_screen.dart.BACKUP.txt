@@ -1,0 +1,223 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/cloudinary_service.dart';
+import '../services/supabase_service.dart';
+
+class CadastroScreen extends StatefulWidget {
+  @override
+  State<CadastroScreen> createState() => _CadastroScreenState();
+}
+
+class _CadastroScreenState extends State<CadastroScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  // Controllers
+  final nomeController = TextEditingController();
+  final nascimentoController = TextEditingController();
+  final telefoneController = TextEditingController();
+  final cepController = TextEditingController();
+  final cidadeController = TextEditingController();
+  final bairroController = TextEditingController();
+  final ruaController = TextEditingController();
+  final rgController = TextEditingController();
+  final emailController = TextEditingController();
+  final fabricanteController = TextEditingController();
+  final modeloController = TextEditingController();
+  final placaController = TextEditingController();
+  final anoController = TextEditingController();
+  final senhaController = TextEditingController();
+  final confirmaSenhaController = TextEditingController();
+
+  bool aceitaTermos = false;
+  bool loading = false;
+
+  File? rgFile, cnhFile, fotoCnhFile, crlvFile;
+
+  Future<void> _pickFile(String type) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+
+    if (picked != null) {
+      setState(() {
+        if (type == 'rg') rgFile = File(picked.path);
+        if (type == 'cnh') cnhFile = File(picked.path);
+        if (type == 'foto_cnh') fotoCnhFile = File(picked.path);
+        if (type == 'crlv') crlvFile = File(picked.path);
+      });
+    }
+  }
+
+  Future<void> _cadastrar() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (!aceitaTermos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Você deve aceitar os termos')),
+      );
+      return;
+    }
+
+    setState(() => loading = true);
+
+    try {
+      final userId = emailController.text.trim();
+
+      final rgUrl = rgFile != null ? await CloudinaryService.uploadFile(rgFile!, 'documentos', userId) : null;
+      final cnhUrl = cnhFile != null ? await CloudinaryService.uploadFile(cnhFile!, 'documentos', userId) : null;
+      final fotoCnhUrl = fotoCnhFile != null ? await CloudinaryService.uploadFile(fotoCnhFile!, 'documentos', userId) : null;
+      final crlvUrl = crlvFile != null ? await CloudinaryService.uploadFile(crlvFile!, 'documentos', userId) : null;
+
+      await SupabaseService.signUp(
+        email: emailController.text.trim(),
+        password: senhaController.text.trim(),
+        userData: {
+          'nome': nomeController.text.trim(),
+          'nascimento': nascimentoController.text.trim(),
+          'telefone': telefoneController.text.trim(),
+          'cep': cepController.text.trim(),
+          'cidade': cidadeController.text.trim(),
+          'bairro': bairroController.text.trim(),
+          'rua': ruaController.text.trim(),
+          'rg_url': rgUrl,
+          'cnh_url': cnhUrl,
+          'foto_cnh_url': fotoCnhUrl,
+          'crlv_url': crlvUrl,
+          'fabricante': fabricanteController.text.trim(),
+          'modelo': modeloController.text.trim(),
+          'placa': placaController.text.trim(),
+          'ano': anoController.text.trim(),
+        },
+      );
+
+      Navigator.pushReplacementNamed(context, '/cadastro_sucesso');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.grey),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  Widget _textField(TextEditingController controller, String hint, {bool obscure = false, String? Function(String?)? validator}) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscure,
+      style: const TextStyle(color: Colors.black), // 🔥 Texto digitado preto
+      decoration: _inputDecoration(hint),
+      validator: validator,
+    );
+  }
+
+  Widget _uploadButton(String label, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.upload_file, color: Colors.white),
+        label: Text(label, style: const TextStyle(color: Colors.white)),
+        style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.orange)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Image.asset('assets/images/logo.png', height: 100),
+                const SizedBox(height: 20),
+
+                _textField(nomeController, 'Nome completo', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(nascimentoController, 'Nascimento', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(telefoneController, 'Telefone', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(cepController, 'Cep', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(cidadeController, 'Cidade', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(bairroController, 'Bairro', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(ruaController, 'Rua', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+
+                _uploadButton('RG', () => _pickFile('rg')),
+                const SizedBox(height: 12),
+                _uploadButton('CNH', () => _pickFile('cnh')),
+                const SizedBox(height: 12),
+                _uploadButton('Foto segurando a CNH', () => _pickFile('foto_cnh')),
+                const SizedBox(height: 12),
+
+                _textField(emailController, 'E-mail', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(fabricanteController, 'Fabricante', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(modeloController, 'Modelo', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(placaController, 'Placa', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+                _textField(anoController, 'Ano', validator: (v) => v!.isEmpty ? 'Preencha' : null),
+                const SizedBox(height: 12),
+
+                _uploadButton('CRLV', () => _pickFile('crlv')),
+                const SizedBox(height: 12),
+
+                _textField(senhaController, 'Senha', obscure: true, validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null),
+                const SizedBox(height: 12),
+                _textField(confirmaSenhaController, 'Confirmar senha', obscure: true, validator: (v) => v != senhaController.text ? 'Senhas não coincidem' : null),
+                const SizedBox(height: 20),
+
+                Row(
+                  children: [
+                    Checkbox(
+                      value: aceitaTermos,
+                      activeColor: Colors.orange,
+                      checkColor: Colors.black,
+                      onChanged: (v) => setState(() => aceitaTermos = v ?? false),
+                    ),
+                    const Expanded(
+                      child: Text('Li e concordo com os termos', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                    onPressed: loading ? null : _cadastrar,
+                    child: loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('Salvar', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,175 @@
+name: driver_app
+description: App para motoristas de transporte
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  
+  # Firebase CORE (essenciais)
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.3
+  cloud_firestore: ^4.13.6
+  
+  # Google Sign In
+  google_sign_in: ^6.1.6
+  
+  # CLOUDINARY e HTTP
+  dio: ^5.3.2
+  http: ^1.1.0
+  crypto: ^3.0.3
+  
+  # UI básico - APENAS o essencial
+  image_picker: ^1.0.4
+  intl: ^0.18.1
+  
+  # Utilities básicos
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+-------------------------------------------
+// android/build.gradle (PROJECT LEVEL) - VERSÃO CORRIGIDA
+
+buildscript {
+    ext.kotlin_version = '1.9.10'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.4'
+        classpath 'com.google.gms:google-services:4.4.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
+------------------------------------------
+# android/gradle.properties - VERSÃO CORRIGIDA
+
+android.useAndroidX=true
+android.enableJetifier=true
+org.gradle.jvmargs=-Xmx4096M -XX:MaxMetaspaceSize=512m
+android.enableR8=true
+
+# Kotlin code style
+kotlin.code.style=official
+
+# Enable parallel builds
+org.gradle.parallel=true
+
+# Suprimir warnings obsoletos do Java
+org.gradle.java.compile-classpath-packaging=true
+android.suppressUnsupportedCompileSdk=35
+
+# Desabilitar configuração cache temporariamente
+org.gradle.configuration-cache=false
+
+# Suprimir warnings de lint
+android.lintOptions.abortOnError=false
+---------------------------------------
+# android/gradle/wrapper/gradle-wrapper.properties
+
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-all.zip
+-----------------------------------------------------------------
+// android/app/build.gradle - VERSÃO FINAL CORRIGIDA
+
+plugins {
+    id "com.android.application"
+    id "com.google.gms.google-services"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace "com.example.driver_app"
+    compileSdk 35
+    ndkVersion "27.0.12077973"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+
+    defaultConfig {
+        applicationId "com.example.driver_app"
+        minSdk 21
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+        }
+        debug {
+            minifyEnabled false
+            shrinkResources false
+            debuggable true
+        }
+    }
+
+    packagingOptions {
+        pickFirst '**/libc++_shared.so'
+        pickFirst '**/libjsc.so'
+        exclude 'META-INF/AL2.0'
+        exclude 'META-INF/LGPL2.1'
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+flutter {
+    source "../.."
+}
+
+dependencies {
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+}
+''''''''''''''''''''''''''''''''''''''''''

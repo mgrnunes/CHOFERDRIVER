@@ -1,0 +1,232 @@
+import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+
+class CadastroScreen extends StatefulWidget {
+  const CadastroScreen({Key? key}) : super(key: key);
+
+  @override
+  State<CadastroScreen> createState() => _CadastroScreenState();
+}
+
+class _CadastroScreenState extends State<CadastroScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
+  final senhaController = TextEditingController();
+  final confirmaSenhaController = TextEditingController();
+  final nomeController = TextEditingController();
+  final nascimentoController = TextEditingController();
+  final telefoneController = TextEditingController();
+  final cepController = TextEditingController();
+  final cidadeController = TextEditingController();
+  final bairroController = TextEditingController();
+  final ruaController = TextEditingController();
+  final rgController = TextEditingController();
+  final fabricanteController = TextEditingController();
+  final modeloController = TextEditingController();
+  final placaController = TextEditingController();
+  final anoController = TextEditingController();
+
+  bool loading = false;
+  bool aceitaTermos = false;
+
+  Future<void> cadastrar() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (!aceitaTermos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Você deve aceitar os termos')),
+      );
+      return;
+    }
+
+    setState(() => loading = true);
+
+    try {
+      final email = emailController.text.trim();
+      final senha = senhaController.text.trim();
+
+      await SupabaseService.signUp(
+        email: email,
+        password: senha,
+        userData: {
+          'email': email,
+          'nome': nomeController.text.trim(),
+          'nascimento': nascimentoController.text.trim(),
+          'telefone': telefoneController.text.trim(),
+          'cep': cepController.text.trim(),
+          'cidade': cidadeController.text.trim(),
+          'bairro': bairroController.text.trim(),
+          'rua': ruaController.text.trim(),
+          'rg': rgController.text.trim(),
+          'fabricante': fabricanteController.text.trim(),
+          'modelo': modeloController.text.trim(),
+          'placa': placaController.text.trim(),
+          'ano': int.tryParse(anoController.text.trim()) ?? DateTime.now().year,
+        },
+      );
+
+      Navigator.pushReplacementNamed(context, '/cadastro_sucesso');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro: $e')),
+      );
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.grey),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+    );
+  }
+
+  Widget _textField(TextEditingController controller, String hint,
+      {bool obscure = false, String? Function(String?)? validator}) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscure,
+      style: const TextStyle(color: Colors.black),
+      decoration: _inputDecoration(hint),
+      validator: validator,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text("Cadastro Motorista"),
+        backgroundColor: Colors.black,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Image.asset('assets/images/logo.png', height: 100),
+                const SizedBox(height: 20),
+
+                _textField(nomeController, 'Nome completo',
+                    validator: (v) => v!.isEmpty ? 'Preencha o nome' : null),
+                const SizedBox(height: 12),
+
+                _textField(nascimentoController, 'Nascimento (DD/MM/AAAA)',
+                    validator: (v) =>
+                        v!.isEmpty ? 'Preencha a data de nascimento' : null),
+                const SizedBox(height: 12),
+
+                _textField(telefoneController, 'Telefone',
+                    validator: (v) => v!.isEmpty ? 'Preencha o telefone' : null),
+                const SizedBox(height: 12),
+
+                _textField(cepController, 'CEP',
+                    validator: (v) => v!.isEmpty ? 'Preencha o CEP' : null),
+                const SizedBox(height: 12),
+
+                _textField(cidadeController, 'Cidade',
+                    validator: (v) => v!.isEmpty ? 'Preencha a cidade' : null),
+                const SizedBox(height: 12),
+
+                _textField(bairroController, 'Bairro',
+                    validator: (v) => v!.isEmpty ? 'Preencha o bairro' : null),
+                const SizedBox(height: 12),
+
+                _textField(ruaController, 'Rua',
+                    validator: (v) => v!.isEmpty ? 'Preencha a rua' : null),
+                const SizedBox(height: 12),
+
+                _textField(rgController, 'RG',
+                    validator: (v) => v!.isEmpty ? 'Preencha o RG' : null),
+                const SizedBox(height: 12),
+
+                _textField(emailController, 'E-mail',
+                    validator: (v) => v!.isEmpty ? 'Preencha o e-mail' : null),
+                const SizedBox(height: 12),
+
+                _textField(fabricanteController, 'Fabricante',
+                    validator: (v) =>
+                        v!.isEmpty ? 'Preencha o fabricante' : null),
+                const SizedBox(height: 12),
+
+                _textField(modeloController, 'Modelo',
+                    validator: (v) => v!.isEmpty ? 'Preencha o modelo' : null),
+                const SizedBox(height: 12),
+
+                _textField(placaController, 'Placa',
+                    validator: (v) => v!.isEmpty ? 'Preencha a placa' : null),
+                const SizedBox(height: 12),
+
+                _textField(anoController, 'Ano',
+                    validator: (v) => v!.isEmpty ? 'Preencha o ano' : null),
+                const SizedBox(height: 12),
+
+                _textField(senhaController, 'Senha',
+                    obscure: true,
+                    validator: (v) =>
+                        v!.length < 6 ? 'Mínimo 6 caracteres' : null),
+                const SizedBox(height: 12),
+
+                _textField(confirmaSenhaController, 'Confirmar senha',
+                    obscure: true,
+                    validator: (v) {
+                      if (v!.isEmpty) return 'Confirme a senha';
+                      if (v != senhaController.text) {
+                        return 'Senhas não coincidem';
+                      }
+                      return null;
+                    }),
+                const SizedBox(height: 20),
+
+                Row(
+                  children: [
+                    Checkbox(
+                      value: aceitaTermos,
+                      onChanged: (v) {
+                        setState(() => aceitaTermos = v ?? false);
+                      },
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Li e concordo com os termos',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                    ),
+                    onPressed: loading ? null : cadastrar,
+                    child: loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Salvar',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
