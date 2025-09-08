@@ -66,4 +66,32 @@ class SupabaseService {
     );
     if (res.user == null) throw Exception('Credenciais inválidas');
   }
+
+  /// Atualiza status online/offline
+  static Future<void> updateOnlineStatus(bool online) async {
+    final user = client.auth.currentUser;
+    if (user == null) throw Exception('Usuário não logado');
+    await client.from('usuarios').update({'online': online}).eq('id', user.id);
+  }
+
+  /// Atualiza notas, aceitação e cancelamento
+  static Future<void> updateDriverStats({
+    required double rating,
+    required double acceptance,
+    required double cancellation,
+  }) async {
+    final user = client.auth.currentUser;
+    if (user == null) throw Exception('Usuário não logado');
+    await client.from('usuarios').update({
+      'rating': rating,
+      'acceptance': acceptance,
+      'cancellation': cancellation,
+    }).eq('id', user.id);
+  }
+
+  /// Busca eventos do Supabase para exibir no mapa
+  static Future<List<Map<String, dynamic>>> getEvents() async {
+    final response = await client.from('events').select();
+    return List<Map<String, dynamic>>.from(response);
+  }
 }
