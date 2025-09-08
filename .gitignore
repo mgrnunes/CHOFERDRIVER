@@ -55,3 +55,7 @@ android/app/google-services.json
 # Cloudinary e outras chaves
 **/config/keys.dart
 **/config/secrets.dart
+# Flutter desktop ephemeral
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+macos/Flutter/ephemeral/
