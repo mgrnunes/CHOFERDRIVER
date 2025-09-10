@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
 import '../services/websocket_service.dart';
@@ -17,7 +18,8 @@ class InicioScreen extends StatefulWidget {
 class _InicioScreenState extends State<InicioScreen> {
   // Controllers
   final TextEditingController _enderecoController = TextEditingController();
-  Completer<GoogleMapController> _mapController = Completer();
+  final MapController _mapController = MapController();
+
   
   // Estado do motorista
   bool isOnline = false;
@@ -25,14 +27,11 @@ class _InicioScreenState extends State<InicioScreen> {
   
   // Localização
   Position? _currentPosition;
-  CameraPosition _initialCameraPosition = const CameraPosition(
-    target: LatLng(-23.5505, -46.6333), // São Paulo como padrão
-    zoom: 15,
-  );
+  LatLng _initialCameraPosition = const LatLng(-23.5505, -46.6333); // São Paulo como padrão
   
   // Markers e polylines
-  Set<Marker> _markers = {};
-  Set<Polyline> _polylines = {};
+  List<Marker> _markers = [];
+  List<Polyline> _polylines = [];
   
   // Dados do motorista (normalmente viriam do servidor/database)
   double nota = 4.85;
@@ -169,11 +168,9 @@ class _InicioScreenState extends State<InicioScreen> {
 
   /// Atualiza posição da câmera no mapa
   void _updateCameraPosition(Position position) async {
-    final controller = await _mapController.future;
-    controller.animateCamera(
-      CameraUpdate.newLatLng(
-        LatLng(position.latitude, position.longitude),
-      ),
+    _mapController.move(
+      LatLng(position.latitude, position.longitude),
+      _mapController.zoom,
     );
   }
 
@@ -182,15 +179,15 @@ class _InicioScreenState extends State<InicioScreen> {
     if (_currentPosition == null) return;
 
     setState(() {
-      _markers.removeWhere((marker) => marker.markerId.value == 'current_location');
+      _markers.removeWhere((marker) => marker.key == const ValueKey('current_location'));
       _markers.add(
         Marker(
-          markerId: const MarkerId('current_location'),
-          position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          infoWindow: InfoWindow(
-            title: 'Sua localização',
-            snippet: LocationService.instance.currentAddress ?? 'Carregando...',
+          key: const ValueKey('current_location'),
+          point: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+          builder: (ctx) => const Icon(
+            Icons.my_location,
+            color: Colors.blue,
+            size: 30,
           ),
         ),
       );
@@ -363,19 +360,25 @@ class _InicioScreenState extends State<InicioScreen> {
     setState(() {
       _markers.add(
         Marker(
-          markerId: const MarkerId('origem_corrida'),
-          position: LatLng(corrida.origemLat, corrida.origemLon),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-          infoWindow: InfoWindow(title: 'Origem', snippet: corrida.origem),
+          key: const ValueKey('origem_corrida'),
+          point: LatLng(corrida.origemLat, corrida.origemLon),
+          builder: (ctx) => const Icon(
+            Icons.location_pin,
+            color: Colors.green,
+            size: 40,
+          ),
         ),
       );
       
       _markers.add(
         Marker(
-          markerId: const MarkerId('destino_corrida'),
-          position: LatLng(corrida.destinoLat, corrida.destinoLon),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          infoWindow: InfoWindow(title: 'Destino', snippet: corrida.destino),
+          key: const ValueKey('destino_corrida'),
+          point: LatLng(corrida.destinoLat, corrida.destinoLon),
+          builder: (ctx) => const Icon(
+            Icons.location_pin,
+            color: Colors.red,
+            size: 40,
+          ),
         ),
       );
     });
@@ -385,8 +388,8 @@ class _InicioScreenState extends State<InicioScreen> {
   void _removeCorridaMarkers() {
     setState(() {
       _markers.removeWhere((marker) => 
-        marker.markerId.value == 'origem_corrida' ||
-        marker.markerId.value == 'destino_corrida'
+        marker.key == const ValueKey('origem_corrida') ||
+        marker.key == const ValueKey('destino_corrida')
       );
     });
   }
@@ -444,6 +447,115 @@ class _InicioScreenState extends State<InicioScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
+              'Eventos no Trajeto',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _eventoItem(Icons.warning, 'Buraco na Av. Principal', Colors.red),
+            _eventoItem(Icons.speed, 'Radar na Rua das Flores', Colors.orange),
+            _eventoItem(Icons.water, 'Alagamento na Rua do Centro', Colors.blue),
+            _eventoItem(Icons.local_police, 'Ponto de Apoio Policial - Praça Central', Colors.green),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _eventoItem(IconData icon, String descricao, Color cor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: cor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: cor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              descricao,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _configurarMeta() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Configurar Meta',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Meta Diária (R\$)',
+                labelStyle: const TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey[600]!),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.orange),
+                ),
+              ),
+              keyboardType: TextInputType.number,
+              controller: TextEditingController(text: metaDiaria.toStringAsFixed(0)),
+              onChanged: (value) {
+                if (value.isNotEmpty) {
+                  metaDiaria = double.tryParse(value) ?? metaDiaria;
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Bônus ${categoria == 'Master 🏆' ? '+R\$ 1,00 por corrida' : 'Destino disponível'}',
+              style: const TextStyle(
+                color: Colors.orange,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                metaAtiva = !metaAtiva;
+              });
+              _saveConfiguration();
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: Text(
+              metaAtiva ? 'Desativar' : 'Ativar',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
               'Deseja continuar online para metas futuras?',
               style: TextStyle(color: Colors.grey),
               textAlign: TextAlign.center,
@@ -630,7 +742,7 @@ class _InicioScreenState extends State<InicioScreen> {
         clipBehavior: Clip.hardEdge,
         child: Stack(
           children: [
-            // Google Maps
+            // Flutter Map with OpenStreetMap
             _isLoadingLocation
                 ? Center(
                     child: Column(
@@ -645,17 +757,20 @@ class _InicioScreenState extends State<InicioScreen> {
                       ],
                     ),
                   )
-                : GoogleMap(
-                    initialCameraPosition: _initialCameraPosition,
-                    onMapCreated: (GoogleMapController controller) {
-                      _mapController.complete(controller);
-                    },
-                    myLocationEnabled: true,
-                    myLocationButtonEnabled: false,
-                    markers: _markers,
-                    polylines: _polylines,
-                    mapType: MapType.normal,
-                    zoomControlsEnabled: false,
+                : FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      center: _initialCameraPosition,
+                      zoom: 15.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.example.app',
+                      ),
+                      MarkerLayer(markers: _markers),
+                      PolylineLayer(polylines: _polylines),
+                    ],
                   ),
             
             // Botão de download offline
@@ -913,11 +1028,9 @@ class _InicioScreenState extends State<InicioScreen> {
     try {
       final position = await LocationService.getCoordinatesFromAddress(endereco);
       if (position != null) {
-        final controller = await _mapController.future;
-        controller.animateCamera(
-          CameraUpdate.newLatLng(
-            LatLng(position.latitude, position.longitude),
-          ),
+        _mapController.move(
+          LatLng(position.latitude, position.longitude),
+          15.0,
         );
         
         // Adicionar aos endereços recentes
@@ -945,11 +1058,9 @@ class _InicioScreenState extends State<InicioScreen> {
 
   void _centralizarMapa() async {
     if (_currentPosition != null) {
-      final controller = await _mapController.future;
-      controller.animateCamera(
-        CameraUpdate.newLatLng(
-          LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-        ),
+      _mapController.move(
+        LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+        15.0,
       );
     }
   }
@@ -968,111 +1079,3 @@ class _InicioScreenState extends State<InicioScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Eventos no Trajeto',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            _eventoItem(Icons.warning, 'Buraco na Av. Principal', Colors.red),
-            _eventoItem(Icons.speed, 'Radar na Rua das Flores', Colors.orange),
-            _eventoItem(Icons.water, 'Alagamento na Rua do Centro', Colors.blue),
-            _eventoItem(Icons.local_police, 'Ponto de Apoio Policial - Praça Central', Colors.green),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _eventoItem(IconData icon, String descricao, Color cor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: cor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: cor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              descricao,
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _configurarMeta() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Configurar Meta',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Meta Diária (R\$)',
-                labelStyle: const TextStyle(color: Colors.grey),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey[600]!),
-                ),
-                focusedBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.orange),
-                ),
-              ),
-              keyboardType: TextInputType.number,
-              controller: TextEditingController(text: metaDiaria.toStringAsFixed(0)),
-              onChanged: (value) {
-                if (value.isNotEmpty) {
-                  metaDiaria = double.tryParse(value) ?? metaDiaria;
-                }
-              },
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Bônus ${categoria == 'Master 🏆' ? '+R\$ 1,00 por corrida' : 'Destino disponível'}',
-              style: const TextStyle(
-                color: Colors.orange,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                metaAtiva = !metaAtiva;
-              });
-              _saveConfiguration();
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text(
-              metaAtiva ? 'Desativar' : 'Ativar',
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
